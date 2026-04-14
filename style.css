@@ -45,8 +45,8 @@ html, body { margin: 0; padding: 0; height: 100%; background: #0e3b1f; color: #f
   0%,100% { box-shadow: 0 0 10px #ffd54a; }
   50% { box-shadow: 0 0 16px #ffe080; }
 }
-.card-img.facedown { background: linear-gradient(135deg,#7a0d0d,#3d0606); border-color: #ffd54a; }
-.card-img.facedown .card-back-inner { width: 100%; height: 100%; background: repeating-linear-gradient(45deg, rgba(255,213,74,0.1) 0 4px, transparent 4px 8px); border: 3px solid transparent; }
+.card-img.facedown { background: linear-gradient(135deg,#7a0d0d,#3d0606) !important; border: 2px solid #ffd54a !important; }
+.card-img.facedown .card-back-inner { width: 100%; height: 100%; background: repeating-linear-gradient(45deg, rgba(255,213,74,0.18) 0 5px, transparent 5px 10px); }
 .card-img.ssang { border-color: #cc7700; border-width: 2px; }
 
 .mini-img { width: 22px; height: 32px; border-radius: 2px; overflow: hidden; border: 1px solid #000; background: #fff; }
@@ -75,9 +75,22 @@ html, body { margin: 0; padding: 0; height: 100%; background: #0e3b1f; color: #f
 .heunggeul-mark { position: absolute; top: -10px; right: -6px; background: #ffd54a; color: #111; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 2px solid #c62828; }
 
 @media (max-width: 600px) {
-  .card-img { width: 50px; height: 75px; }
-  .card-back, .flip-slot { width: 50px; height: 75px; }
-  .field { min-width: 320px; }
-  .field .slot .stack .card-img + .card-img { margin-top: -58px; }
-  .top { font-size: 11px; }
+  #app { padding: 4px; gap: 4px; }
+  .card-img { width: 44px; height: 66px; }
+  .card-back, .flip-slot { width: 44px; height: 66px; }
+  .field-row { flex-direction: column; gap: 8px; padding: 6px 4px; min-height: 0; }
+  .field { min-width: 0; max-width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+  .field .slot .stack .card-img + .card-img { margin-top: -50px; }
+  .deck-stack { flex-direction: row; gap: 12px; align-items: center; }
+  .top { font-size: 10px; padding: 6px 4px; grid-template-columns: 1fr 1.2fr 1fr; gap: 4px; }
+  .player-info .who { font-size: 12px; }
+  .captured { padding-left: 16px; }
+  .cap-group::before { left: -14px; font-size: 9px; width: 12px; }
+  .captured .mini-img { width: 14px; height: 20px; }
+  .hand { gap: 3px; min-height: 72px; padding: 2px; }
+  .opp-hand .card-img { transform: scale(0.78); margin: -4px; }
+  .modal-box { padding: 12px; font-size: 12px; }
+  .modal-title { font-size: 15px; }
+  .modal-actions button { padding: 7px 14px; font-size: 13px; }
+  .attribution { font-size: 10px; padding: 4px; }
 }
