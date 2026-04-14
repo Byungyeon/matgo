@@ -103,7 +103,7 @@ const G = {
   ppeokCount: { me: 0, opp: 0 }, // \ubed1 \ub2f9\ud55c \ud69f\uc218 (\uc0c1\ub300\uac00 \ub05d\ub0bc \ub54c +1)
   shake: { me: 0, opp: 0 }, // \ud754\ub4e4\uae30 \ud69f\uc218
   bonusPi: { me: 0, opp: 0 }, // \ucabd/\ub530\ub2e5/\uc4f8 \ub54c \uc0c1\ub300\uac8c\uc11c \ubc1b\uc744 \ud53c \uc218
-  autoTurns: { me: 0, opp: 0 }, // \ud3ed\ud0c4 \ud6c4 \ub371\ub9cc \ub4a4\uc9d1\ub294 \uc790\ub3d9 \ud134 \uc218
+  bombBonus: { me: 0, opp: 0 }, // \ud3ed\ud0c4 \ubcf4\ub108\uc2a4: \ub0a8\uc740 \ud69f\uc218\ub9cc\ud07c "\ub371\ub9cc \ub4a4\uc9d1\uae30" \uc120\ud0dd \uac00\ub2a5
   locked: false, // \uc790\ub3d9 \ud134/\uc560\ub2c8\uba54\uc774\uc158 \uc911 \uc870\uc791 \uc7a0\uae08
   goCount: { me: 0, opp: 0 },
   lastGoScore: { me: 0, opp: 0 }, // \uace0 \uc120\uc5b8 \uc2dc\uc810 \uc810\uc218
@@ -124,7 +124,7 @@ function newGame() {
   G.ppeokCount = { me: 0, opp: 0 };
   G.shake = { me: 0, opp: 0 };
   G.bonusPi = { me: 0, opp: 0 };
-  G.autoTurns = { me: 0, opp: 0 };
+  G.bombBonus = { me: 0, opp: 0 };
   G.locked = false;
   G.goCount = { me: 0, opp: 0 };
   G.lastGoScore = { me: 0, opp: 0 };
@@ -237,8 +237,8 @@ async function playBomb(who, month) {
   addCaptured(who, fieldCards.concat(extracted));
   G.bonusPi[who]++;
   transferPi(who);
-  G.autoTurns[who] = 2;
-  showMsg(who === 'me' ? '\ud3ed\ud0c4! 3\uc7a5 \ubc1c\uc0ac' : 'CPU \ud3ed\ud0c4!');
+  G.bombBonus[who] += 2;
+  showMsg(who === 'me' ? '\ud3ed\ud0c4! 3\uc7a5 \ubc1c\uc0ac (\ub2e4\uc74c 2\ud134 \ub371\ub9cc \ub4a4\uc9d1\uae30 \uc120\ud0dd\uc73c\ub85c \uac00\ub2a5)' : 'CPU \ud3ed\ud0c4!');
   // \ub371 \ub4a4\uc9d1\uae30
   await deckFlipPhase(who, month);
   await finishTurn(who);
@@ -575,12 +575,6 @@ async function endTurn(who) {
   G.turn = who === 'me' ? 'opp' : 'me';
   const next = G.turn;
   render();
-  // \ud3ed\ud0c4 \ud6c4 \uc790\ub3d9 \ud134 \ucc98\ub9ac
-  if (G.autoTurns[next] > 0) {
-    G.autoTurns[next]--;
-    setTimeout(() => autoFlipTurn(next), 800);
-    return;
-  }
   if (next === 'opp') {
     setTimeout(() => cpuTurn(), 700);
   } else {
@@ -589,11 +583,28 @@ async function endTurn(who) {
   }
 }
 
+// \uc0ac\uc6a9\uc790\uac00 "\ub371\ub9cc \ub4a4\uc9d1\uae30" \uc120\ud0dd (\ud3ed\ud0c4 \ubcf4\ub108\uc2a4 1\ud69f \uc18c\ubaa8)
+async function useBombBonus(who) {
+  if (G.bombBonus[who] <= 0 || G.locked) return;
+  G.bombBonus[who]--;
+  await autoFlipTurn(who);
+}
+
 // ====== CPU AI ======
 function cpuTurn() {
   if (G.gameOver) return;
   const hand = G.hands.opp;
   if (hand.length === 0) { endTurn('opp'); return; }
+  // \ud3ed\ud0c4 \ubcf4\ub108\uc2a4: \uc190\uc5d0 \ub9e4\uce58 \uac00\ub2a5\ud55c \uce74\ub4dc \uc5c6\uc73c\uba74 \uc2a4\ud0b5
+  if (G.bombBonus.opp > 0) {
+    const hasMatch = hand.some(c => (G.field[c.month] || []).length > 0);
+    if (!hasMatch) {
+      G.bombBonus.opp--;
+      showMsg('CPU: \ub371\ub9cc \ub4a4\uc9d1\uae30 (\ud3ed\ud0c4 \ubcf4\ub108\uc2a4)');
+      setTimeout(() => autoFlipTurn('opp'), 600);
+      return;
+    }
+  }
 
   // \uc804\ub7b5: \uba54\uce58\ub418\ub294 \uce74\ub4dc \uc911 \ud68d\ub4dd \uac00\uce58 \ub192\uc740 \uac83 \uc6b0\uc120
   // 1) \ubc14\ub2e5\uc5d0 \ub9e4\uce58 \uc788\uace0 \uadf8 \uce74\ub4dc\uac00 \uad11/\uba85\ud310\uc774\uba74 \ucd5c\uc6b0\uc120
@@ -705,6 +716,14 @@ function render() {
 
   renderCaptured('me');
   renderCaptured('opp');
+
+  // \ud3ed\ud0c4 \ubcf4\ub108\uc2a4 \ubc84\ud2bc
+  const bb = document.getElementById('bomb-pass-wrap');
+  if (bb) {
+    const show = G.turn === 'me' && G.bombBonus.me > 0 && !G.locked && !G.gameOver;
+    bb.style.display = show ? 'flex' : 'none';
+    if (show) document.getElementById('bomb-pass-count').textContent = G.bombBonus.me;
+  }
 }
 
 function renderCaptured(who) {
@@ -766,5 +785,7 @@ function showRules() {
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('reset').addEventListener('click', newGame);
   document.getElementById('rules-btn').addEventListener('click', showRules);
+  const bp = document.getElementById('bomb-pass-btn');
+  if (bp) bp.addEventListener('click', () => useBombBonus('me'));
   newGame();
 });

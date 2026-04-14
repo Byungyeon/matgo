@@ -65,6 +65,15 @@ html, body { margin: 0; padding: 0; height: 100%; background: #0e3b1f; color: #f
 .modal-actions button.secondary { background: #555; color: #fff; }
 .modal-actions button.danger { background: #c62828; color: #fff; }
 
+.bomb-pass-wrap { display: flex; justify-content: center; padding: 4px; }
+.bomb-pass-btn { padding: 10px 20px; background: linear-gradient(135deg,#c62828,#8b0000); color: #ffd54a; border: 2px solid #ffd54a; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.4); animation: bomb-pulse 1.8s ease-in-out infinite; }
+.bomb-pass-btn:hover { transform: translateY(-2px); }
+.bomb-pass-btn:active { transform: translateY(0); }
+@keyframes bomb-pulse {
+  0%,100% { box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+  50% { box-shadow: 0 2px 14px rgba(255,213,74,0.6); }
+}
+
 .controls { display: flex; justify-content: center; gap: 8px; padding: 8px; }
 .controls button { padding: 6px 14px; background: #1a3d2a; color: #ffd54a; border: 1px solid #ffd54a; border-radius: 6px; cursor: pointer; font-size: 13px; }
 

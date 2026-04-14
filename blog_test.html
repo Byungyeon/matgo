@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Blog preview</title></head>
+<body style="margin:0;padding:20px;background:#eee;">
+<h2>Blog post above game</h2>
+<p>Some article content before the game embed.</p>
+<hr>
+<!-- EMBED_START -->
+<!-- (빌드된 blog_matgo.html 내용이 여기에 삽입됩니다) -->
+<!-- EMBED_END -->
+<hr>
+<p>Article content below.</p>
+<script>
+fetch('blog_matgo.html').then(r=>r.text()).then(t=>{
+  const el=document.createElement('div');
+  el.innerHTML=t;
+  document.body.insertBefore(el, document.querySelector('hr:last-of-type'));
+  // Inline scripts from innerHTML don't execute; re-add them
+  el.querySelectorAll('script').forEach(s=>{
+    const ns=document.createElement('script');
+    ns.textContent=s.textContent;
+    document.body.appendChild(ns);
+  });
+});
+</script>
+</body>
+</html>
