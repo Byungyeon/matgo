@@ -255,6 +255,7 @@ function shuffle(arr) {
 const G = {
   deck: [],
   field: {}, // month -> [card]
+  fieldOrder: [], // \ubc14\ub2e5 \uc2ac\ub86f \ud45c\uc2dc \uc21c\uc11c (\uc0bd\uc785 \uc21c \uc720\uc9c0)
   hands: { me: [], opp: [] },
   captured: { me: [], opp: [] }, // \uac01\uc790 \uac00\uc838\uac04 \uce74\ub4dc
   scores: { me: 0, opp: 0 },
@@ -277,6 +278,7 @@ function newGame() {
   const deck = shuffle(makeDeck());
   G.deck = deck.slice();
   G.field = {};
+  G.fieldOrder = [];
   G.hands = { me: [], opp: [] };
   G.captured = { me: [], opp: [] };
   G.scores = { me: 0, opp: 0 };
@@ -295,11 +297,14 @@ function newGame() {
   // 2\uc778 \ub9de\uace0: \ub0b4 10 + \uc0c1\ub300 10 + \ubc14\ub2e5 8 + \ub371 20 = 48
   for (let i = 0; i < 10; i++) G.hands.me.push(G.deck.pop());
   for (let i = 0; i < 10; i++) G.hands.opp.push(G.deck.pop());
-  for (let i = 0; i < 8; i++) {
-    const c = G.deck.pop();
-    if (!G.field[c.month]) G.field[c.month] = [];
+  // \ucd08\uae30 \ubc14\ub2e5 8\uc7a5: \ub840 \uc21c\uc11c\uc5d0 \uc758\uc874\ud558\uc9c0 \uc54a\uac8c \uc190\uc5d0 \ubaa8\uc544\uc11c \ub2e4\uc2dc \uc139\uc77c
+  const initField = [];
+  for (let i = 0; i < 8; i++) initField.push(G.deck.pop());
+  shuffle(initField);
+  initField.forEach(c => {
+    if (!G.field[c.month]) { G.field[c.month] = []; G.fieldOrder.push(c.month); }
     G.field[c.month].push(c);
-  }
+  });
   // \ub098\ub204\uae30 \ud6c4 \ubc14\ub2e5\uc5d0 \uac19\uc740 \uc6d4 4\uc7a5 \uc788\uc73c\uba74 \ub354\ub7ec\uc8fc\uae30\ub85c \uadf8\ub300\ub85c \ud569\uce58\uace0 \ucc28\ub840 \uc2dc\uc791
   // (\uac04\ub2e8\ud654: \uadf8\ub0e5 \ub458)
   G.turn = 'me';
@@ -310,6 +315,17 @@ function newGame() {
     showMsg('\uac8c\uc784 \uc2dc\uc791!');
   }, 50);
   render();
+}
+
+// ====== \ubc14\ub2e5 \uc2ac\ub86f \ud5ec\ud37c ======
+function fieldDel(month) {
+  fieldDel(month);
+  const i = G.fieldOrder.indexOf(month);
+  if (i >= 0) G.fieldOrder.splice(i, 1);
+}
+function fieldSetSingle(month, card) {
+  G.field[month] = [card];
+  if (G.fieldOrder.indexOf(month) < 0) G.fieldOrder.push(month);
 }
 
 // ====== \uc720\ud2f8 ======
@@ -394,7 +410,7 @@ async function playBomb(who, month) {
     if (hand[i].month === month) extracted.push(hand.splice(i, 1)[0]);
   }
   const fieldCards = (G.field[month] || []).slice();
-  delete G.field[month];
+  fieldDel(month);
   addCaptured(who, fieldCards.concat(extracted));
   G.bonusPi[who]++;
   transferPi(who);
@@ -412,17 +428,17 @@ async function deckFlipPhase(who, contextMonth) {
   const fm = flipped.month;
   const fcards = (G.field[fm] || []).slice();
   if (fcards.length === 0) {
-    G.field[fm] = [flipped];
+    fieldSetSingle(fm, flipped);
   } else if (fcards.length === 1) {
     addCaptured(who, [fcards[0], flipped]);
-    delete G.field[fm];
+    fieldDel(fm);
   } else if (fcards.length === 2) {
     G.field[fm] = fcards.concat([flipped]);
     G.ppeokCount[who === 'me' ? 'opp' : 'me']++;
     showMsg('\ubf65!');
   } else if (fcards.length === 3) {
     addCaptured(who, fcards.concat([flipped]));
-    delete G.field[fm];
+    fieldDel(fm);
     G.bonusPi[who]++;
     transferPi(who);
     showMsg('\ud3ed\ud0c4 (\ub371)!');
@@ -475,10 +491,10 @@ async function playCard(who, card) {
   let captured = [];
 
   if (origFieldLen === 0) {
-    G.field[month] = [card];
+    fieldSetSingle(month, card);
   } else if (origFieldLen === 1) {
     captured = [fieldCards[0], card];
-    delete G.field[month];
+    fieldDel(month);
   } else if (origFieldLen === 2) {
     // 2\uc7a5 \uc911 1\uc7a5\ub9cc \uc120\ud0dd \ud6c4 \uac00\uc838\uac10, \ub098\uba38\uc9c0\ub294 \ubc14\ub2e5\uc5d0 \uc720\uc9c0
     const pick = await pickFieldCard(who, fieldCards);
@@ -487,7 +503,7 @@ async function playCard(who, card) {
   } else if (origFieldLen === 3) {
     // 3\uc7a5 \ubaa8\ub450 + \ub0b4 \uce74\ub4dc = 4\uc7a5 \uac00\uc838\uac10, \ud754\ub4e4\uae30 \uc801\uc6a9
     captured = fieldCards.concat([card]);
-    delete G.field[month];
+    fieldDel(month);
     G.bonusPi[who]++;
     G.shake[who]++;
     showMsg(who === 'me' ? '\ud754\ub4e4\uc5b4! 4\uc7a5 \ud68d\ub4dd' : 'CPU \ud754\ub4e4\uc5b4!');
@@ -503,7 +519,7 @@ async function playCard(who, card) {
       if (origFieldLen === 0) {
         // \ucabd: \ub0b4\uac00 \ube48 \uacf3\uc5d0 \ub0c8\ub294\ub370 \uac19\uc740 \uc6d4
         flippedCaptured = [card, flipped];
-        delete G.field[month];
+        fieldDel(month);
         flippedEvent = 'jjok';
       } else if (origFieldLen === 1) {
         // \ub530\ub2e5: \uc774\ubbf8 \ub450 \uc7a5 \uac00\uc838\uac14\ub294\ub370 \uac19\uc740 \uc6d4 \ub6f0
@@ -515,15 +531,15 @@ async function playCard(who, card) {
         flippedEvent = 'ttadak';
       } else {
         // \ub09c\uc790\ud55c \uacbd\uc6b0: \ud544\ub4dc\uc5d0 \ub193\uc74c
-        G.field[fm] = [flipped];
+        fieldSetSingle(fm, flipped);
       }
     } else {
       const fcards = (G.field[fm] || []).slice();
       if (fcards.length === 0) {
-        G.field[fm] = [flipped];
+        fieldSetSingle(fm, flipped);
       } else if (fcards.length === 1) {
         flippedCaptured = [fcards[0], flipped];
-        delete G.field[fm];
+        fieldDel(fm);
       } else if (fcards.length === 2) {
         // \ubed1: 3\uc7a5\uc774 \ub428
         G.field[fm] = fcards.concat([flipped]);
@@ -531,7 +547,7 @@ async function playCard(who, card) {
         G.ppeokCount[who === 'me' ? 'opp' : 'me']++;
       } else if (fcards.length === 3) {
         flippedCaptured = fcards.concat([flipped]);
-        delete G.field[fm];
+        fieldDel(fm);
         flippedEvent = 'pok';
         G.bonusPi[who]++;
       }
@@ -841,10 +857,11 @@ function render() {
   document.getElementById('m-deck-count').textContent = G.deck.length;
   document.getElementById('m-turn-name').textContent = G.turn === 'me' ? '\ub098' : 'CPU';
 
-  // \ub0b4 \uc190
+  // \ub0b4 \uc190 (\uc624\ub984\ucc28\uc21c \uc815\ub82c)
   const myH = document.getElementById('m-my-hand');
   myH.innerHTML = '';
-  G.hands.me.forEach(c => {
+  const sortedMyHand = G.hands.me.slice().sort((a, b) => a.month - b.month || a.uid - b.uid);
+  sortedMyHand.forEach(c => {
     const can = G.turn === 'me' && !G.gameOver && !G.locked;
     const hasMatch = (G.field[c.month] || []).length > 0;
     myH.appendChild(cardEl(c, {
@@ -859,13 +876,12 @@ function render() {
   opH.innerHTML = '';
   G.hands.opp.forEach(c => opH.appendChild(cardEl(c, { facedown: true })));
 
-  // \ud544\ub4dc
+  // \ud544\ub4dc \u2014 \uc0bd\uc785 \uc21c\uc11c (\ub79c\ub364 \uc704\uce58 \uc720\uc9c0)
   const f = document.getElementById('m-field');
   f.innerHTML = '';
-  // 1~12\uc6d4 \uc21c\uc11c\ub300\ub85c \uc1fc\uc6b0
-  for (let m = 1; m <= 12; m++) {
+  G.fieldOrder.forEach(m => {
     const cards = G.field[m];
-    if (!cards || cards.length === 0) continue;
+    if (!cards || cards.length === 0) return;
     const slot = document.createElement('div');
     slot.className = 'slot';
     const stack = document.createElement('div');
@@ -873,7 +889,7 @@ function render() {
     cards.forEach(c => stack.appendChild(cardEl(c)));
     slot.appendChild(stack);
     f.appendChild(slot);
-  }
+  });
 
   renderCaptured('me');
   renderCaptured('opp');
