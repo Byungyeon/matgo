@@ -35,8 +35,7 @@
 #m-app .card-img:hover { transform: translateY(-4px); box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
 #m-app .card-img.disabled { opacity: 0.5; cursor: not-allowed; }
 #m-app .card-img.disabled:hover { transform: none; }
-#m-app .card-img.selectable { outline: 3px solid #ffd54a; box-shadow: 0 0 10px #ffd54a; transform: translateY(-8px); animation: pulse-glow 1.4s ease-in-out infinite; z-index: 1; }
-#m-app .card-img.selectable::after { content: '\25bc'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd54a; font-size: 14px; text-shadow: 0 0 3px #000; pointer-events: none; }
+#m-app .card-img.selectable { outline: 3px solid #ffd54a; outline-offset: -1px; box-shadow: 0 0 12px #ffd54a; animation: pulse-glow 1.4s ease-in-out infinite; pointer-events: auto; }
 
 @keyframes pulse-glow {
   0%,100% { box-shadow: 0 0 10px #ffd54a; }
@@ -47,7 +46,7 @@
 #m-app .card-img.ssang { border-color: #cc7700; border-width: 2px; }
 #m-app .mini-img { width: 22px; height: 32px; border-radius: 2px; overflow: hidden; border: 1px solid #000; background: #fff; }
 #m-app .mini-img img { width: 100%; height: 100%; display: block; }
-#m-app .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
+#m-app .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 99999 !important; }
 #m-app .modal.hidden { display: none; }
 #m-app .modal-box { background: #1a3d2a; border: 2px solid #ffd54a; border-radius: 10px; padding: 18px; max-width: 520px; width: 92%; max-height: 80vh; overflow-y: auto; }
 #m-app .modal-title { font-size: 18px; font-weight: bold; color: #ffd54a; margin-bottom: 10px; text-align: center; }
@@ -92,9 +91,9 @@
 #m-app .hand { gap: 3px; padding: 2px; row-gap: 16px; min-height: 66px; }
 #m-app .my-hand { padding-top: 12px; }
 #m-app .opp-hand .card-img { transform: scale(0.8); margin: -3px; }
-#m-app .card-img.selectable { transform: translateY(-4px); }
-#m-app .card-img.selectable::after { font-size: 12px; top: -12px; }
-#m-app .modal-box { padding: 12px; font-size: 12px; max-width: 92%; }
+#m-app /* \uc120\ud0dd \ud45c\uc2dc\ub294 \uc544\uc6c3\ub77c\uc778\uacfc \uad11\ucc44\ub9cc \u2014 \ud2b8\ub79c\uc2a4\ud3fc \uc5c6\uc74c */
+
+  .modal-box { padding: 12px; font-size: 12px; max-width: 92%; }
 #m-app .modal-title { font-size: 15px; }
 #m-app .modal-actions button { padding: 7px 14px; font-size: 13px; }
 #m-app .attribution { font-size: 10px; padding: 4px; }
@@ -461,11 +460,14 @@ async function finishTurn(who) {
 
 async function autoFlipTurn(who) {
   G.locked = true;
-  showMsg(who === 'me' ? '\uc790\ub3d9 \ud134: \ub371 \ub4a4\uc9d1\uae30' : 'CPU \uc790\ub3d9 \ud134');
-  render();
-  await new Promise(r => setTimeout(r, 700));
-  await deckFlipPhase(who, null);
-  G.locked = false;
+  try {
+    showMsg(who === 'me' ? '\uc790\ub3d9 \ud134: \ub371 \ub4a4\uc9d1\uae30' : 'CPU \uc790\ub3d9 \ud134');
+    render();
+    await new Promise(r => setTimeout(r, 700));
+    await deckFlipPhase(who, null);
+  } finally {
+    G.locked = false;
+  }
   await finishTurn(who);
 }
 

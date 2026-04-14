@@ -297,11 +297,14 @@ async function finishTurn(who) {
 
 async function autoFlipTurn(who) {
   G.locked = true;
-  showMsg(who === 'me' ? '\uc790\ub3d9 \ud134: \ub371 \ub4a4\uc9d1\uae30' : 'CPU \uc790\ub3d9 \ud134');
-  render();
-  await new Promise(r => setTimeout(r, 700));
-  await deckFlipPhase(who, null);
-  G.locked = false;
+  try {
+    showMsg(who === 'me' ? '\uc790\ub3d9 \ud134: \ub371 \ub4a4\uc9d1\uae30' : 'CPU \uc790\ub3d9 \ud134');
+    render();
+    await new Promise(r => setTimeout(r, 700));
+    await deckFlipPhase(who, null);
+  } finally {
+    G.locked = false;
+  }
   await finishTurn(who);
 }
 
