@@ -35,8 +35,8 @@
 #m-app .card-img:hover { transform: translateY(-4px); box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
 #m-app .card-img.disabled { opacity: 0.5; cursor: not-allowed; }
 #m-app .card-img.disabled:hover { transform: none; }
-#m-app .card-img.selectable { outline: 3px solid #ffd54a; box-shadow: 0 0 10px #ffd54a; transform: translateY(-8px); animation: pulse-glow 1.4s ease-in-out infinite; }
-#m-app .card-img.selectable::after { content: '\25bc'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd54a; font-size: 14px; text-shadow: 0 0 3px #000; }
+#m-app .card-img.selectable { outline: 3px solid #ffd54a; box-shadow: 0 0 10px #ffd54a; transform: translateY(-8px); animation: pulse-glow 1.4s ease-in-out infinite; z-index: 1; }
+#m-app .card-img.selectable::after { content: '\25bc'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd54a; font-size: 14px; text-shadow: 0 0 3px #000; pointer-events: none; }
 
 @keyframes pulse-glow {
   0%,100% { box-shadow: 0 0 10px #ffd54a; }
@@ -89,8 +89,11 @@
 #m-app .cap-group::before { left: -13px; font-size: 9px; width: 11px; top: 1px; }
 #m-app .captured .mini-img { width: 13px; height: 19px; }
 #m-app .opp-hand-row, #m-app .my-hand-row { margin: 0; }
-#m-app .hand { gap: 3px; min-height: 66px; padding: 2px; }
+#m-app .hand { gap: 3px; padding: 2px; row-gap: 16px; min-height: 66px; }
+#m-app .my-hand { padding-top: 12px; }
 #m-app .opp-hand .card-img { transform: scale(0.8); margin: -3px; }
+#m-app .card-img.selectable { transform: translateY(-4px); }
+#m-app .card-img.selectable::after { font-size: 12px; top: -12px; }
 #m-app .modal-box { padding: 12px; font-size: 12px; max-width: 92%; }
 #m-app .modal-title { font-size: 15px; }
 #m-app .modal-actions button { padding: 7px 14px; font-size: 13px; }

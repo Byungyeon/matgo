@@ -39,8 +39,8 @@ html, body { margin: 0; padding: 0; height: 100%; background: #0e3b1f; color: #f
 .card-img:hover { transform: translateY(-4px); box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
 .card-img.disabled { opacity: 0.5; cursor: not-allowed; }
 .card-img.disabled:hover { transform: none; }
-.card-img.selectable { outline: 3px solid #ffd54a; box-shadow: 0 0 10px #ffd54a; transform: translateY(-8px); animation: pulse-glow 1.4s ease-in-out infinite; }
-.card-img.selectable::after { content: '\25bc'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd54a; font-size: 14px; text-shadow: 0 0 3px #000; }
+.card-img.selectable { outline: 3px solid #ffd54a; box-shadow: 0 0 10px #ffd54a; transform: translateY(-8px); animation: pulse-glow 1.4s ease-in-out infinite; z-index: 1; }
+.card-img.selectable::after { content: '\25bc'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd54a; font-size: 14px; text-shadow: 0 0 3px #000; pointer-events: none; }
 @keyframes pulse-glow {
   0%,100% { box-shadow: 0 0 10px #ffd54a; }
   50% { box-shadow: 0 0 16px #ffe080; }
@@ -101,8 +101,11 @@ html, body { margin: 0; padding: 0; height: 100%; background: #0e3b1f; color: #f
   .captured .mini-img { width: 13px; height: 19px; }
 
   .opp-hand-row, .my-hand-row { margin: 0; }
-  .hand { gap: 3px; min-height: 66px; padding: 2px; }
+  .hand { gap: 3px; padding: 2px; row-gap: 16px; min-height: 66px; }
+  .my-hand { padding-top: 12px; }
   .opp-hand .card-img { transform: scale(0.8); margin: -3px; }
+  .card-img.selectable { transform: translateY(-4px); }
+  .card-img.selectable::after { font-size: 12px; top: -12px; }
 
   .modal-box { padding: 12px; font-size: 12px; max-width: 92%; }
   .modal-title { font-size: 15px; }
