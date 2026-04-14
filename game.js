@@ -148,12 +148,36 @@ function newGame() {
   // (\uac04\ub2e8\ud654: \uadf8\ub0e5 \ub458)
   G.turn = 'me';
   setTimeout(() => {
+    // \ucd1d\ud1b5 \uccb4\ud06c: \uc190\uc5d0 \uac19\uc740 \uc6d4 4\uc7a5\uc774 \ubaa8\ub450 \uc788\uc73c\uba74 \uc989\uc2dc \uc2b9\ub9ac (\uae30\ubcf8 7\uc810)
+    const meTotong = checkTotong('me');
+    const oppTotong = checkTotong('opp');
+    if (meTotong) { declareTotong('me', meTotong); return; }
+    if (oppTotong) { declareTotong('opp', oppTotong); return; }
     checkShakeOption('me');
     checkShakeOption('opp');
     render();
     showMsg('\uac8c\uc784 \uc2dc\uc791!');
   }, 50);
   render();
+}
+
+function checkTotong(who) {
+  const months = {};
+  G.hands[who].forEach(c => { months[c.month] = (months[c.month] || 0) + 1; });
+  for (const m in months) if (months[m] === 4) return parseInt(m);
+  return null;
+}
+
+function declareTotong(who, month) {
+  G.gameOver = true;
+  const title = who === 'me' ? '\ucd1d\ud1b5 \uc2b9\ub9ac!' : '\ucd1d\ud1b5 \ud328\ubc30';
+  const body = '<div style="text-align:center;font-size:16px;margin:8px 0">' +
+    (who === 'me' ? '\ub0b4' : 'CPU') + ' \uc190\uc5d0 ' + month + '\uc6d4 \uce74\ub4dc 4\uc7a5\uc774 \ubaa8\ub450 \ubaa8\uc600\uc2b5\ub2c8\ub2e4!' +
+    '</div><div style="text-align:center;font-size:28px;color:#ffd54a;margin:14px 0">7 \uc810</div>';
+  // \uc2b9\uc790 \uc810\uc218 7\uc73c\ub85c \uc124\uc815 (\ud45c\uc2dc\uc6a9)
+  G.scores[who] = 7;
+  render();
+  showModal(title, body, [{ text: '\uc0c8 \uac8c\uc784', onClick: () => { hideModal(); newGame(); } }]);
 }
 
 // ====== \ubc14\ub2e5 \uc2ac\ub86f \ud5ec\ud37c ======
@@ -796,7 +820,8 @@ function showRules() {
     '\u2022 \uace0\ubc15: \uace0 \ubd80\ub978 \uc0ac\ub78c\uc774 \uc9c0\uba74 \uc0c1\ub300 \uc810\uc218 x2<br><br>' +
     '<b>\uc774\ubca4\ud2b8</b><br>' +
     '\u2022 \ucabd/\ub530\ub2e5/\ud3ed\ud0c4: \uc0c1\ub300\uc5d0\uac8c \ud53c 1\uc7a5 \ubcf4\ub108\uc2a4<br>' +
-    '\u2022 \ubed1: \ubc14\ub2e5\uc5d0 \uac19\uc740 \uc6d4 2\uc7a5\uc774 \uc788\ub294 \uc0c1\ud0dc\uc5d0\uc11c \ub4a4\uc9d1\uc740 \uce74\ub4dc\uac00 \uac19\uc740 \uc6d4 \u2192 3\uc7a5 \uc801\uccb4. \ub098\uc911\uc5d0 4\uc7a5\uc9f8 \uba39\uc73c\uba74 \ud3ed\ud0c4.',
+    '\u2022 \ubed1: \ubc14\ub2e5\uc5d0 \uac19\uc740 \uc6d4 2\uc7a5\uc774 \uc788\ub294 \uc0c1\ud0dc\uc5d0\uc11c \ub4a4\uc9d1\uc740 \uce74\ub4dc\uac00 \uac19\uc740 \uc6d4 \u2192 3\uc7a5 \uc801\uccb4. \ub098\uc911\uc5d0 4\uc7a5\uc9f8 \uba39\uc73c\uba74 \ud3ed\ud0c4.<br>' +
+    '\u2022 \ucd1d\ud1b5: \ub098\ub220\ubc1b\uc740 \uc190\uc5d0 \uac19\uc740 \uc6d4 4\uc7a5\uc774 \ubaa8\ub450 \uc788\uc73c\uba74 \uc989\uc2dc \uc2b9\ub9ac (\uae30\ubcf8 7\uc810)',
     [{ text: '\ub2eb\uae30', onClick: hideModal }]);
 }
 
