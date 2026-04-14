@@ -158,7 +158,7 @@ function newGame() {
 
 // ====== \ubc14\ub2e5 \uc2ac\ub86f \ud5ec\ud37c ======
 function fieldDel(month) {
-  fieldDel(month);
+  delete G.field[month];
   const i = G.fieldOrder.indexOf(month);
   if (i >= 0) G.fieldOrder.splice(i, 1);
 }
