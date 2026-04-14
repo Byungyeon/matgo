@@ -103,6 +103,8 @@ const G = {
   ppeokCount: { me: 0, opp: 0 }, // \ubed1 \ub2f9\ud55c \ud69f\uc218 (\uc0c1\ub300\uac00 \ub05d\ub0bc \ub54c +1)
   shake: { me: 0, opp: 0 }, // \ud754\ub4e4\uae30 \ud69f\uc218
   bonusPi: { me: 0, opp: 0 }, // \ucabd/\ub530\ub2e5/\uc4f8 \ub54c \uc0c1\ub300\uac8c\uc11c \ubc1b\uc744 \ud53c \uc218
+  autoTurns: { me: 0, opp: 0 }, // \ud3ed\ud0c4 \ud6c4 \ub371\ub9cc \ub4a4\uc9d1\ub294 \uc790\ub3d9 \ud134 \uc218
+  locked: false, // \uc790\ub3d9 \ud134/\uc560\ub2c8\uba54\uc774\uc158 \uc911 \uc870\uc791 \uc7a0\uae08
   goCount: { me: 0, opp: 0 },
   lastGoScore: { me: 0, opp: 0 }, // \uace0 \uc120\uc5b8 \uc2dc\uc810 \uc810\uc218
   lastGoScorer: null, // \uace0\ubc15 \uacc4\uc0b0\uc6a9
@@ -122,6 +124,8 @@ function newGame() {
   G.ppeokCount = { me: 0, opp: 0 };
   G.shake = { me: 0, opp: 0 };
   G.bonusPi = { me: 0, opp: 0 };
+  G.autoTurns = { me: 0, opp: 0 };
+  G.locked = false;
   G.goCount = { me: 0, opp: 0 };
   G.lastGoScore = { me: 0, opp: 0 };
   G.lastGoScorer = null;
@@ -204,8 +208,100 @@ function checkShakeOption(who) {
   }
 }
 
+// ====== \ud3ed\ud0c4 (\uc190 3\uc7a5 + \ubc14\ub2e5 \ub9e4\uce58) ======
+function checkBombOpportunity(who, month) {
+  const sameCount = G.hands[who].filter(c => c.month === month).length;
+  const fieldHas = (G.field[month] || []).length >= 1;
+  return sameCount >= 3 && fieldHas;
+}
+
+function askBomb(month) {
+  return new Promise(resolve => {
+    showModal('\ud3ed\ud0c4 \uae30\ud68c!',
+      '\uc190\uc5d0 ' + month + '\uc6d4 3\uc7a5\uc774 \uc788\uace0 \ubc14\ub2e5\uc5d0\ub3c4 \uc788\uc2b5\ub2c8\ub2e4. <br>\ud3ed\ud0c4\uc73c\ub85c 3\uc7a5\uc744 \ud55c\uaebc\ubc88\uc5d0 \ub0b4\uace0 \ud53c 1\uc7a5 \ubcf4\ub108\uc2a4 + \ub2e4\uc74c 2\ud134 \uc790\ub3d9(\ub371\ub9cc) \ucc98\ub9ac?',
+      [
+        { text: '\ud3ed\ud0c4!', onClick: () => { hideModal(); resolve('bomb'); } },
+        { text: '\uadf8\ub0e5 1\uc7a5\ub9cc', cls: 'secondary', onClick: () => { hideModal(); resolve('normal'); } },
+      ]);
+  });
+}
+
+async function playBomb(who, month) {
+  const hand = G.hands[who];
+  const extracted = [];
+  for (let i = hand.length - 1; i >= 0 && extracted.length < 3; i--) {
+    if (hand[i].month === month) extracted.push(hand.splice(i, 1)[0]);
+  }
+  const fieldCards = (G.field[month] || []).slice();
+  delete G.field[month];
+  addCaptured(who, fieldCards.concat(extracted));
+  G.bonusPi[who]++;
+  transferPi(who);
+  G.autoTurns[who] = 2;
+  showMsg(who === 'me' ? '\ud3ed\ud0c4! 3\uc7a5 \ubc1c\uc0ac' : 'CPU \ud3ed\ud0c4!');
+  // \ub371 \ub4a4\uc9d1\uae30
+  await deckFlipPhase(who, month);
+  await finishTurn(who);
+}
+
+// \ub371\uc5d0\uc11c 1\uc7a5 \ub4a4\uc9d1\uc5b4 \ubc14\ub2e5\uacfc \uc0c1\ud638\uc791\uc6a9 \u2014 \uc190\uc73c\ub85c \uba39\uc740 \uc6d4(contextMonth) \uc548\ub4e4\uc5b4\uac00 \ub3c4 \ucabd/\ub530\ub2e5 \uccb4\ud06c \uc5c6\uc774 \ucc98\ub9ac
+async function deckFlipPhase(who, contextMonth) {
+  const flipped = G.deck.pop();
+  if (!flipped) return;
+  const fm = flipped.month;
+  const fcards = (G.field[fm] || []).slice();
+  if (fcards.length === 0) {
+    G.field[fm] = [flipped];
+  } else if (fcards.length === 1) {
+    addCaptured(who, [fcards[0], flipped]);
+    delete G.field[fm];
+  } else if (fcards.length === 2) {
+    G.field[fm] = fcards.concat([flipped]);
+    G.ppeokCount[who === 'me' ? 'opp' : 'me']++;
+    showMsg('\ubf65!');
+  } else if (fcards.length === 3) {
+    addCaptured(who, fcards.concat([flipped]));
+    delete G.field[fm];
+    G.bonusPi[who]++;
+    transferPi(who);
+    showMsg('\ud3ed\ud0c4 (\ub371)!');
+  }
+}
+
+async function finishTurn(who) {
+  const sc = calcScore(who);
+  G.scores[who] = sc.total;
+  render();
+  if (sc.total >= 7 && sc.total > G.lastGoScore[who]) {
+    await goStopDecision(who, sc);
+  } else {
+    await endTurn(who);
+  }
+}
+
+async function autoFlipTurn(who) {
+  G.locked = true;
+  showMsg(who === 'me' ? '\uc790\ub3d9 \ud134: \ub371 \ub4a4\uc9d1\uae30' : 'CPU \uc790\ub3d9 \ud134');
+  render();
+  await new Promise(r => setTimeout(r, 700));
+  await deckFlipPhase(who, null);
+  G.locked = false;
+  await finishTurn(who);
+}
+
 // ====== \uce74\ub4dc \ub0b4\uae30 (\uba54\uc778 \ub85c\uc9c1) ======
 async function playCard(who, card) {
+  // \ud3ed\ud0c4 \uae30\ud68c \uccb4\ud06c
+  if (checkBombOpportunity(who, card.month)) {
+    let choice;
+    if (who === 'me') choice = await askBomb(card.month);
+    else {
+      // CPU: \ubc14\ub2e5 \uce74\ub4dc \uac00\uce58 \ub192\uc73c\uba74 \ud3ed\ud0c4
+      const fv = (G.field[card.month] || []).reduce((s, c) => s + cardValue(c), 0);
+      choice = fv >= 3 ? 'bomb' : 'normal';
+    }
+    if (choice === 'bomb') return playBomb(who, card.month);
+  }
   // hand\uc5d0\uc11c \uc81c\uac70
   const hand = G.hands[who];
   const idx = hand.findIndex(c => c.uid === card.uid);
@@ -477,8 +573,15 @@ async function endTurn(who) {
     return;
   }
   G.turn = who === 'me' ? 'opp' : 'me';
+  const next = G.turn;
   render();
-  if (G.turn === 'opp') {
+  // \ud3ed\ud0c4 \ud6c4 \uc790\ub3d9 \ud134 \ucc98\ub9ac
+  if (G.autoTurns[next] > 0) {
+    G.autoTurns[next]--;
+    setTimeout(() => autoFlipTurn(next), 800);
+    return;
+  }
+  if (next === 'opp') {
     setTimeout(() => cpuTurn(), 700);
   } else {
     checkShakeOption('me');
@@ -570,7 +673,7 @@ function render() {
   const myH = document.getElementById('my-hand');
   myH.innerHTML = '';
   G.hands.me.forEach(c => {
-    const can = G.turn === 'me' && !G.gameOver;
+    const can = G.turn === 'me' && !G.gameOver && !G.locked;
     const hasMatch = (G.field[c.month] || []).length > 0;
     myH.appendChild(cardEl(c, {
       disabled: !can,
